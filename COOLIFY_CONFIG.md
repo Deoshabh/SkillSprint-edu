@@ -8,9 +8,9 @@ NODE_ENV=production
 
 ## Deployment Settings:
 - Build Pack: Docker
-- Port: 80
+- Port: 8080 (Safe port choice for multiple projects)
 - Build Command: Uses Dockerfile
-- Health Check: HTTP GET / (port 80)
+- Health Check: HTTP GET / (port 8080)
 
 ## Network Requirements:
 - Ensure both SkillSprint and Supabase containers are on the same network

@@ -191,7 +191,25 @@ function App() {
       <AuthModal 
         isOpen={showAuth}
         onClose={() => setShowAuth(false)}
-        supabase={supabase}
+        onLogin={(userData) => {
+          setUser(userData);
+          setShowAuth(false);
+          toast({
+            title: "Welcome back!",
+            description: "You've successfully logged in.",
+          });
+        }}
+        onSignup={(userData) => {
+          setUser(userData);
+          setShowAuth(false);
+          if (!userData.onboardingCompleted) {
+            setShowOnboarding(true);
+          }
+          toast({
+            title: "Welcome to SkillSprint!",
+            description: "Your account has been created successfully.",
+          });
+        }}
       />
 
       <OnboardingFlow

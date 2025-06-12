@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { X, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
+import { supabase } from '@/lib/supabaseClient';
 
 const AuthModal = ({ isOpen, onClose, onLogin, onSignup }) => {
   const [isLoginMode, setIsLoginMode] = useState(true);
@@ -19,36 +20,107 @@ const AuthModal = ({ isOpen, onClose, onLogin, onSignup }) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      const isAdmin = formData.email === 'admin@skillsprint.io';
+    try {
       if (isLoginMode) {
-        onLogin({
-          id: Date.now(),
-          name: formData.email.split('@')[0],
+        // Login with Supabase
+        const { data, error } = await supabase.auth.signInWithPassword({
           email: formData.email,
-          onboardingCompleted: true,
-          isAdmin,
+          password: formData.password,
         });
+
+        if (error) {
+          toast({
+            title: "Login failed",
+            description: error.message,
+            variant: "destructive",
+          });
+        } else {
+          const isAdmin = formData.email === 'admin@skillsprint.io';
+          onLogin({
+            id: data.user.id,
+            name: data.user.user_metadata?.full_name || formData.email.split('@')[0],
+            email: data.user.email,
+            onboardingCompleted: true,
+            isAdmin,
+          });
+          toast({
+            title: "Welcome back!",
+            description: "You've successfully logged in.",
+          });
+        }
       } else {
-        onSignup({
-          id: Date.now(),
-          name: formData.name,
+        // Signup with Supabase
+        const { data, error } = await supabase.auth.signUp({
           email: formData.email,
-          onboardingCompleted: false,
-          isAdmin,
+          password: formData.password,
+          options: {
+            data: {
+              full_name: formData.name,
+            },
+          },
         });
+
+        if (error) {
+          toast({
+            title: "Signup failed",
+            description: error.message,
+            variant: "destructive",
+          });
+        } else {
+          const isAdmin = formData.email === 'admin@skillsprint.io';
+          onSignup({
+            id: data.user?.id || Date.now(),
+            name: formData.name,
+            email: formData.email,
+            onboardingCompleted: false,
+            isAdmin,
+          });
+          toast({
+            title: "Welcome to SkillSprint!",
+            description: data.user?.email_confirmed_at ? "Account created successfully!" : "Please check your email for verification.",
+          });
+        }
       }
+    } catch (error) {
+      toast({
+        title: "Authentication error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+      console.error('Auth error:', error);
+    } finally {
       setIsLoading(false);
       setFormData({ name: '', email: '', password: '' });
-    }, 1000);
+    }
   };
 
-  const handleGoogleAuth = () => {
-    toast({
-      title: "🚧 Google OAuth coming soon!",
-      description: "Google authentication isn't implemented yet—but don't worry! You can request it in your next prompt! 🚀",
-    });
+  const handleGoogleAuth = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin,
+        },
+      });
+
+      if (error) {
+        toast({
+          title: "Google OAuth Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Google OAuth Error",
+        description: "Failed to initialize Google authentication. Please try email signup.",
+        variant: "destructive",
+      });
+      console.error('Google OAuth error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (!isOpen) return null;

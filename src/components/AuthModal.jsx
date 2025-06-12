@@ -29,9 +29,10 @@ const AuthModal = ({ isOpen, onClose, onLogin, onSignup }) => {
         });
 
         if (error) {
+          console.error('Supabase login error:', error);
           toast({
             title: "Login failed",
-            description: error.message,
+            description: `${error.message} (Code: ${error.status || 'unknown'})`,
             variant: "destructive",
           });
         } else {
@@ -61,9 +62,10 @@ const AuthModal = ({ isOpen, onClose, onLogin, onSignup }) => {
         });
 
         if (error) {
+          console.error('Supabase signup error:', error);
           toast({
             title: "Signup failed",
-            description: error.message,
+            description: `${error.message} (Code: ${error.status || 'unknown'})`,
             variant: "destructive",
           });
         } else {

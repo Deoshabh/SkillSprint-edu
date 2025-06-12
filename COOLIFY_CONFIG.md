@@ -11,6 +11,7 @@ NODE_ENV=production
 ## - Using HTTP instead of HTTPS due to invalid SSL certificate
 ## - Make sure both apps (SkillSprint and Supabase) use the same protocol
 ## - CORS is configured in Supabase to allow your app domain
+## - The anon key above matches your Supabase SERVICE_SUPABASEANON_KEY
 
 ## Deployment Settings:
 - Build Pack: Docker

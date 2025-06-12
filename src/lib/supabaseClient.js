@@ -8,8 +8,10 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJ0eXAiOiJKV
 // Debug logging
 console.log('🔍 Supabase Config:')
 console.log('URL:', supabaseUrl)
+console.log('Anon Key (first 20 chars):', supabaseAnonKey.substring(0, 20) + '...')
 console.log('Environment:', import.meta.env.NODE_ENV)
 console.log('Mode:', import.meta.env.MODE)
+console.log('All VITE env vars:', Object.keys(import.meta.env).filter(key => key.startsWith('VITE_')))
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {

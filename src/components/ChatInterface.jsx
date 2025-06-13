@@ -48,13 +48,23 @@ const ChatInterface = ({ isOpen, onToggle, user }) => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim()) return;
+
+    const userMessage = {
+      id: Date.now(),
+      type: 'user',
+      content: inputMessage,
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
     setIsLoading(true);
 
-    // Simulate AI response with Together AI (Llama-4)
     try {
-      // In a real implementation, this would call your API endpoint
-      const response = await simulateAIResponse(inputMessage);
+      // Call Together AI API with Llama 4
+      const response = await callTogetherAI(inputMessage, messages);
       
       const aiMessage = {
         id: Date.now() + 1,
@@ -65,13 +75,76 @@ const ChatInterface = ({ isOpen, onToggle, user }) => {
 
       setMessages(prev => [...prev, aiMessage]);
     } catch (error) {
+      console.error('Together AI Error:', error);
       toast({
-        title: "Error",
-        description: "Failed to get AI response. Please try again.",
+        title: "AI Assistant Unavailable",
+        description: "Using fallback responses. Check your Together AI configuration.",
+        variant: "destructive"
       });
+      
+      // Fallback to simulated response
+      const fallbackResponse = await simulateAIResponse(inputMessage);
+      const aiMessage = {
+        id: Date.now() + 1,
+        type: 'ai',
+        content: fallbackResponse,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, aiMessage]);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const callTogetherAI = async (message, conversationHistory) => {
+    const TOGETHER_API_KEY = import.meta.env.VITE_TOGETHER_API_KEY;
+    
+    if (!TOGETHER_API_KEY) {
+      throw new Error('Together AI API key not configured');
+    }
+
+    // Prepare conversation context
+    const systemPrompt = `You are an AI learning assistant for SkillSprint, an educational platform. You help students with:
+- Programming (JavaScript, React, Node.js, Python, etc.)
+- Data Structures & Algorithms
+- English Communication
+- Design & AI Tools
+- Aptitude & Reasoning
+
+Be helpful, encouraging, and provide practical examples. Keep responses concise but informative.`;
+
+    const conversationMessages = [
+      { role: "system", content: systemPrompt },
+      ...conversationHistory.slice(-10).map(msg => ({
+        role: msg.type === 'user' ? 'user' : 'assistant',
+        content: msg.content
+      })),
+      { role: "user", content: message }
+    ];
+
+    const response = await fetch('https://api.together.xyz/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${TOGETHER_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo',
+        messages: conversationMessages,
+        max_tokens: 1024,
+        temperature: 0.7,
+        top_p: 0.9,
+        stream: false
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`Together AI API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0]?.message?.content || 'Sorry, I couldn\'t generate a response.';
   };
 
   const simulateAIResponse = async (message) => {

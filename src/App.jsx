@@ -52,19 +52,51 @@ function App() {
   
   const fetchUserProfile = async () => {
     if (session?.user) {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
-      
-      if (error) {
-        toast({ title: "Error fetching profile", description: error.message, variant: "destructive" });
-      } else if (data) {
-        setUser({ ...session.user, ...data });
-        if (!data.full_name) {
-          setShowOnboarding(true);
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (error) {
+          console.error('Profile fetch error:', error.message);
+          // If profile doesn't exist, it should be created by the database trigger
+          // But let's wait a moment and try again
+          setTimeout(async () => {
+            const { data: retryData, error: retryError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
+            
+            if (retryError) {
+              toast({ 
+                title: "Profile Error", 
+                description: "Please refresh the page or contact support", 
+                variant: "destructive" 
+              });
+            } else {
+              setUser({ ...session.user, ...retryData });
+              if (!retryData.name || !retryData.onboarding_completed) {
+                setShowOnboarding(true);
+              }
+            }
+          }, 2000);
+        } else if (data) {
+          console.log('✅ Profile loaded:', data);
+          setUser({ ...session.user, ...data });
+          if (!data.name || !data.onboarding_completed) {
+            setShowOnboarding(true);
+          }
         }
+      } catch (err) {
+        console.error('Profile fetch failed:', err);
+        toast({ 
+          title: "Error", 
+          description: "Failed to load profile", 
+          variant: "destructive" 
+        });
       }
     }
   };
@@ -85,12 +117,20 @@ function App() {
   };
   
   const handleOnboardingComplete = async (preferences) => {
+    if (!user?.id) return;
+    
     const { error } = await supabase
       .from('profiles')
-      .update({ full_name: preferences.name })
-      .eq('id', user.id)
+      .update({ 
+        name: preferences.name,
+        onboarding_completed: true,
+        selected_track: preferences.selectedTrack,
+        daily_goal: preferences.dailyGoal
+      })
+      .eq('id', user.id);
 
     if (error) {
+      console.error('Onboarding update error:', error);
       toast({ title: "Error updating profile", description: error.message, variant: "destructive" });
     } else {
       await fetchUserProfile();
@@ -191,25 +231,6 @@ function App() {
       <AuthModal 
         isOpen={showAuth}
         onClose={() => setShowAuth(false)}
-        onLogin={(userData) => {
-          setUser(userData);
-          setShowAuth(false);
-          toast({
-            title: "Welcome back!",
-            description: "You've successfully logged in.",
-          });
-        }}
-        onSignup={(userData) => {
-          setUser(userData);
-          setShowAuth(false);
-          if (!userData.onboardingCompleted) {
-            setShowOnboarding(true);
-          }
-          toast({
-            title: "Welcome to SkillSprint!",
-            description: "Your account has been created successfully.",
-          });
-        }}
       />
 
       <OnboardingFlow

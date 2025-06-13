@@ -1,0 +1,27 @@
+
+{
+  "name": "SkillSprint - AI-Powered Learning Platform",
+  "short_name": "SkillSprint",
+  "description": "Multi-track learning with AI-powered chat, quizzes, and progress tracking",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6366f1",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "categories": ["education", "productivity"],
+  "lang": "en"
+}

@@ -48,17 +48,6 @@ const ChatInterface = ({ isOpen, onToggle, user }) => {
     };
 
     setMessages(prev => [...prev, userMessage]);
-  const handleSendMessage = async () => {
-    if (!inputMessage.trim()) return;
-
-    const userMessage = {
-      id: Date.now(),
-      type: 'user',
-      content: inputMessage,
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
     setIsLoading(true);
 
@@ -348,6 +337,6 @@ Be helpful, encouraging, and provide practical examples. Keep responses concise 
       )}
     </motion.div>
   );
-};
+}
 
 export default ChatInterface;

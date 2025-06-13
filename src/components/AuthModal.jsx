@@ -36,14 +36,9 @@ const AuthModal = ({ isOpen, onClose, onLogin, onSignup }) => {
             variant: "destructive",
           });
         } else {
-          const isAdmin = formData.email === 'admin@skillsprint.io';
-          onLogin({
-            id: data.user.id,
-            name: data.user.user_metadata?.full_name || formData.email.split('@')[0],
-            email: data.user.email,
-            onboardingCompleted: true,
-            isAdmin,
-          });
+          console.log('✅ Login successful:', data.user.email);
+          // Let App.jsx handle the profile fetching
+          onClose();
           toast({
             title: "Welcome back!",
             description: "You've successfully logged in.",
@@ -69,14 +64,9 @@ const AuthModal = ({ isOpen, onClose, onLogin, onSignup }) => {
             variant: "destructive",
           });
         } else {
-          const isAdmin = formData.email === 'admin@skillsprint.io';
-          onSignup({
-            id: data.user?.id || Date.now(),
-            name: formData.name,
-            email: formData.email,
-            onboardingCompleted: false,
-            isAdmin,
-          });
+          console.log('✅ Signup successful:', data.user?.email);
+          // Profile will be created automatically by database trigger
+          onClose();
           toast({
             title: "Welcome to SkillSprint!",
             description: data.user?.email_confirmed_at ? "Account created successfully!" : "Please check your email for verification.",
